@@ -16,8 +16,8 @@ sh tools/sign_app.sh ad-hoc
 ```
 
 The Swift suite covers admission calculations, wire parsing, SSE framing,
-reasoning cleanup, offline setup, settings persistence, Ollama selection, SSH
-alias parsing, and release portability. Packaging creates these ignored build
+reasoning cleanup, offline setup, speech settings persistence, Ollama
+selection, SSH alias parsing, and release portability. Packaging creates these ignored build
 artifacts under `dist/`:
 
 - `SaveToken.app`
@@ -32,6 +32,7 @@ No model weights or user settings are copied into the bundle.
 - `AppState.swift` — providers, persisted selection, generation, SSH approval.
 - `ServerClient.swift` — loopback-only SaveToken/Ollama HTTP clients.
 - `SSHClient.swift` — configured-alias parsing and bounded batch-mode SSH.
+- `SpeechService.swift` — on-device macOS voice playback and WAV export.
 - `ResponseTextSanitizer.swift` — hides reasoning and tokenizer control text.
 - `Views.swift` / `ChatViews.swift` — SwiftUI interface.
 - `tools/` — deterministic packaging and signing/notarization preflight.

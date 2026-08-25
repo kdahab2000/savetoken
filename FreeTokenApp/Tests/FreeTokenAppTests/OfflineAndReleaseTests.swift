@@ -100,6 +100,9 @@ final class OfflineAndReleaseTests: XCTestCase {
         s.saveTokenPort = 9000
         s.selectedOllamaModelID = "qwen3.8:27b-mlx"
         s.sshToolsEnabled = true
+        s.speechVoiceIdentifier = "com.apple.voice.compact.en-US.Samantha"
+        s.speechRate = 0.42
+        s.autoSpeakReplies = true
         XCTAssertTrue(store.save(s))
         let loaded = store.load()
         XCTAssertEqual(loaded, s)
@@ -147,6 +150,38 @@ final class OfflineAndReleaseTests: XCTestCase {
 
         state.setSSHToolsEnabled(false)
         XCTAssertFalse(store.load().sshToolsEnabled)
+        try? FileManager.default.removeItem(at: store.directory)
+    }
+
+    @MainActor
+    func testSpeechPreferencesPersistAndClamp() {
+        let store = tempStore()
+        let state = AppState(client: ServerClient(provider: .ollama), settingsStore: store)
+        state.setSpeechVoiceIdentifier("example.voice")
+        state.setSpeechRate(5)
+        state.setAutoSpeakReplies(true)
+
+        let saved = store.load()
+        XCTAssertEqual(saved.speechVoiceIdentifier, "example.voice")
+        XCTAssertEqual(saved.speechRate, 1.0)
+        XCTAssertTrue(saved.autoSpeakReplies)
+
+        state.setSpeechRate(-2)
+        XCTAssertEqual(store.load().speechRate, 0.1)
+        try? FileManager.default.removeItem(at: store.directory)
+    }
+
+    func testOlderSettingsDefaultToSafeSpeechPreferences() {
+        let store = tempStore()
+        try? FileManager.default.createDirectory(
+            at: store.directory, withIntermediateDirectories: true)
+        let oldSettings = Data("{\"provider\":\"ollama\",\"sshToolsEnabled\":true}".utf8)
+        try? oldSettings.write(to: store.fileURL)
+
+        let loaded = store.load()
+        XCTAssertNil(loaded.speechVoiceIdentifier)
+        XCTAssertEqual(loaded.speechRate, 0.5)
+        XCTAssertFalse(loaded.autoSpeakReplies)
         try? FileManager.default.removeItem(at: store.directory)
     }
 }

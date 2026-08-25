@@ -56,6 +56,7 @@ struct MessageList: View {
 }
 
 struct MessageBubble: View {
+    @EnvironmentObject var state: AppState
     let message: ChatMessage
 
     var body: some View {
@@ -75,6 +76,9 @@ struct MessageBubble: View {
                             .textSelection(.enabled)
                     }
                 }
+                if message.role == "assistant", !message.content.isEmpty {
+                    MessageSpeechActions(speech: state.speech, message: message)
+                }
             }
             .padding(10)
             .background(
@@ -84,6 +88,47 @@ struct MessageBubble: View {
                           : Color.gray.opacity(0.10))
             )
             if message.role == "assistant" { Spacer(minLength: 60) }
+        }
+    }
+}
+
+struct MessageSpeechActions: View {
+    @EnvironmentObject var state: AppState
+    @ObservedObject var speech: SpeechService
+    let message: ChatMessage
+
+    private var isThisMessageSpeaking: Bool {
+        speech.isSpeaking && speech.activeMessageID == message.id
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button {
+                state.speak(message)
+            } label: {
+                Label(isThisMessageSpeaking ? "Stop speaking" : "Speak",
+                      systemImage: isThisMessageSpeaking ? "stop.fill" : "speaker.wave.2.fill")
+                    .labelStyle(.iconOnly)
+            }
+            .buttonStyle(.borderless)
+            .help(isThisMessageSpeaking ? "Stop local speech" : "Speak this response locally")
+
+            Button {
+                state.exportSpeech(message)
+            } label: {
+                Label("Export WAV", systemImage: "square.and.arrow.down")
+                    .labelStyle(.iconOnly)
+            }
+            .buttonStyle(.borderless)
+            .disabled(speech.isExporting)
+            .help("Export this response as a local WAV file")
+
+            if speech.isExporting {
+                ProgressView().controlSize(.mini)
+            }
+            Text("on-device speech")
+                .font(.caption2)
+                .foregroundColor(.secondary)
         }
     }
 }

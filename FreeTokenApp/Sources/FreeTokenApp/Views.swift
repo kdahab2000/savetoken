@@ -341,6 +341,7 @@ struct SettingsView: View {
                         .font(.caption2)
                         .foregroundColor(state.settings.hasWorkspace ? .green : .secondary)
                 }
+                SpeechSettingsView(speech: state.speech)
                 setupStatusRow("Ollama on 127.0.0.1:11434", detected: state.ollamaDetected)
                 setupStatusRow("\(state.provider.displayName) backend",
                                detected: state.isOnline ? true : false)
@@ -359,6 +360,56 @@ struct SettingsView: View {
             Text("\(label): \(detected == nil ? "checking…" : (detected! ? "detected" : "not detected"))")
                 .font(.caption)
         }
+    }
+}
+
+struct SpeechSettingsView: View {
+    @EnvironmentObject var state: AppState
+    @ObservedObject var speech: SpeechService
+
+    var body: some View {
+        Divider()
+        Text("On-device speech").font(.caption.bold())
+        Picker("Voice", selection: Binding(
+            get: { state.settings.speechVoiceIdentifier ?? "" },
+            set: { state.setSpeechVoiceIdentifier($0.isEmpty ? nil : $0) })) {
+            Text("Automatic (macOS)").tag("")
+            ForEach(speech.voices) { voice in
+                Text(voice.label).tag(voice.id)
+            }
+        }
+        .pickerStyle(.menu)
+
+        HStack {
+            Text("Speed").font(.caption)
+            Slider(value: Binding(
+                get: { state.settings.speechRate },
+                set: { state.setSpeechRate($0) }), in: 0.3...0.65)
+            Text(String(format: "%.2f", state.settings.speechRate))
+                .font(.caption.monospacedDigit())
+                .frame(width: 32, alignment: .trailing)
+        }
+
+        Toggle("Speak completed replies automatically", isOn: Binding(
+            get: { state.settings.autoSpeakReplies },
+            set: { state.setAutoSpeakReplies($0) }))
+            .font(.caption)
+
+        Button {
+            if speech.isSpeaking {
+                speech.stop()
+            } else {
+                state.previewSpeech()
+            }
+        } label: {
+            Label(speech.isSpeaking ? "Stop voice test" : "Test voice",
+                  systemImage: speech.isSpeaking ? "stop.fill" : "speaker.wave.2.fill")
+        }
+        .disabled(speech.isExporting)
+
+        Text("Uses voices installed in macOS. Speech playback and WAV export stay on this Mac.")
+            .font(.caption2)
+            .foregroundColor(.secondary)
     }
 }
 

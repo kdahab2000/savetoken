@@ -2,6 +2,13 @@
 
 This project follows semantic versioning. Dates use ISO 8601.
 
+## 0.6.0 — 2026-08-26
+
+- Added fully local text-to-speech playback using voices installed in macOS.
+- Added per-response speak/stop controls and WAV export.
+- Added persisted voice, speed, and automatic-reply-reading preferences.
+- Speech requires no microphone permission and sends no text to a TTS service.
+
 ## 0.5.0 — 2026-08-26
 
 Initial public development preview.

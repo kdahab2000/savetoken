@@ -19,8 +19,8 @@ import subprocess
 
 APP_NAME = "SaveToken.app"
 EXECUTABLE_NAME = "SaveToken"
-APP_VERSION = "0.5.0"
-BUNDLE_VERSION = "1"
+APP_VERSION = "0.6.0"
+BUNDLE_VERSION = "2"
 BUNDLE_ID = "local.savetoken.app"
 BUNDLE_NAME = "SaveToken"
 MIN_MACOS = "13.0"
@@ -139,6 +139,8 @@ def _write_metadata(dist_dir: str) -> dict:
             "the local Ollama daemon; the UI labels them CLOUD.",
             "No SaveToken telemetry or prompt logging; research and "
             "development only, not for clinical use.",
+            "Speech playback and WAV export use voices installed in macOS "
+            "and stay on this Mac.",
         ],
     }
     manifest_path = os.path.join(dist_dir, "RELEASE_MANIFEST.json")

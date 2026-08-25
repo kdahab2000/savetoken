@@ -19,6 +19,12 @@ struct AppSettings: Codable, Equatable {
     /// Whether the local Ollama model may request an SSH command. Every
     /// requested command still goes through the in-app approval dialog.
     var sshToolsEnabled: Bool = false
+    /// Empty/nil means macOS chooses the voice automatically for the text.
+    var speechVoiceIdentifier: String? = nil
+    /// AVSpeechUtterance rate. The UI keeps this inside a comfortable range.
+    var speechRate: Double = 0.5
+    /// Speak each completed assistant response without an extra click.
+    var autoSpeakReplies: Bool = false
 
     private enum CodingKeys: String, CodingKey {
         case provider
@@ -27,6 +33,9 @@ struct AppSettings: Codable, Equatable {
         case ollamaPort
         case selectedOllamaModelID
         case sshToolsEnabled
+        case speechVoiceIdentifier
+        case speechRate
+        case autoSpeakReplies
     }
 
     init() {}
@@ -41,6 +50,10 @@ struct AppSettings: Codable, Equatable {
         ollamaPort = try values.decodeIfPresent(Int.self, forKey: .ollamaPort) ?? BackendProvider.ollama.port
         selectedOllamaModelID = try values.decodeIfPresent(String.self, forKey: .selectedOllamaModelID)
         sshToolsEnabled = try values.decodeIfPresent(Bool.self, forKey: .sshToolsEnabled) ?? false
+        speechVoiceIdentifier = try values.decodeIfPresent(String.self, forKey: .speechVoiceIdentifier)
+        let decodedSpeechRate = try values.decodeIfPresent(Double.self, forKey: .speechRate) ?? 0.5
+        speechRate = min(max(decodedSpeechRate, 0.1), 1.0)
+        autoSpeakReplies = try values.decodeIfPresent(Bool.self, forKey: .autoSpeakReplies) ?? false
     }
 
     var hasWorkspace: Bool {

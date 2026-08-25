@@ -1,5 +1,7 @@
 import Foundation
 import SwiftUI
+import AppKit
+import UniformTypeIdentifiers
 
 struct ChatMessage: Identifiable, Equatable {
     let id = UUID()
@@ -54,6 +56,8 @@ final class AppState: ObservableObject {
     @Published var isSSHRunning = false
     @Published var settings: AppSettings
     @Published var ollamaDetected: Bool?
+
+    let speech = SpeechService()
 
     private(set) var client: ServerClient
     private let settingsStore: SettingsStore
@@ -192,6 +196,70 @@ final class AppState: ObservableObject {
         sshToolsEnabled = enabled
         settings.sshToolsEnabled = enabled
         settingsStore.save(settings)
+    }
+
+    func setSpeechVoiceIdentifier(_ identifier: String?) {
+        settings.speechVoiceIdentifier = identifier
+        settingsStore.save(settings)
+    }
+
+    func setSpeechRate(_ rate: Double) {
+        settings.speechRate = min(max(rate, 0.1), 1.0)
+        settingsStore.save(settings)
+    }
+
+    func setAutoSpeakReplies(_ enabled: Bool) {
+        settings.autoSpeakReplies = enabled
+        settingsStore.save(settings)
+    }
+
+    func speak(_ message: ChatMessage) {
+        if speech.activeMessageID == message.id && speech.isSpeaking {
+            speech.stop()
+        } else {
+            speech.speak(
+                text: message.content,
+                messageID: message.id,
+                voiceIdentifier: settings.speechVoiceIdentifier,
+                rate: settings.speechRate)
+        }
+    }
+
+    func previewSpeech() {
+        let selectedLanguage = settings.speechVoiceIdentifier.flatMap { id in
+            speech.voices.first(where: { $0.id == id })?.language
+        } ?? Locale.current.language.languageCode?.identifier ?? "en"
+        let text = selectedLanguage.hasPrefix("ar")
+            ? "مرحبًا، هذا اختبار للصوت المحلي في سيف توكن."
+            : "Hello, this is SaveToken local speech."
+        speech.speak(
+            text: text,
+            voiceIdentifier: settings.speechVoiceIdentifier,
+            rate: settings.speechRate)
+    }
+
+    func exportSpeech(_ message: ChatMessage) {
+        let panel = NSSavePanel()
+        panel.title = "Export spoken response"
+        panel.prompt = "Export"
+        panel.nameFieldStringValue = "SaveToken-response.wav"
+        panel.allowedContentTypes = [.wav]
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.speech.exportWAV(
+                    text: message.content,
+                    voiceIdentifier: self.settings.speechVoiceIdentifier,
+                    rate: self.settings.speechRate,
+                    to: url)
+                self.banner = Banner(kind: .info, text: "Exported local speech to \(url.lastPathComponent).")
+            } catch {
+                self.banner = Banner(kind: .error, text: "Speech export failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     /// Startup command for the active provider, built from the user's own
@@ -428,7 +496,7 @@ final class AppState: ObservableObject {
                     accumulatedRaw, finalized: true)
                 var msg = ChatMessage(role: "assistant", content: visibleText)
                 msg.warning = self.streamWarning
-                self.messages.append(msg)
+                self.appendAssistantMessage(msg)
                 if !sawDone {
                     self.banner = Banner(
                         kind: .info,
@@ -536,7 +604,7 @@ final class AppState: ObservableObject {
                         response.message.content ?? "", finalized: true)
                 }
                 self.streamingText = finalText
-                self.messages.append(ChatMessage(role: "assistant", content: finalText))
+                self.appendAssistantMessage(ChatMessage(role: "assistant", content: finalText))
             } catch let e as APIError {
                 self.lastAdmission = e.detail
                 self.banner = Banner(kind: .error, text: e.detail.message)
@@ -585,6 +653,17 @@ final class AppState: ObservableObject {
         }
     }
 
+    private func appendAssistantMessage(_ message: ChatMessage) {
+        messages.append(message)
+        if settings.autoSpeakReplies, !message.stopped, !message.content.isEmpty {
+            speech.speak(
+                text: message.content,
+                messageID: message.id,
+                voiceIdentifier: settings.speechVoiceIdentifier,
+                rate: settings.speechRate)
+        }
+    }
+
     func stop() {
         cancelSSHCommand()
         streamTask?.cancel()
@@ -592,6 +671,7 @@ final class AppState: ObservableObject {
 
     func clear() {
         guard !isGenerating else { return }
+        speech.stop()
         messages.removeAll()
         banner = nil
         lastAdmission = nil

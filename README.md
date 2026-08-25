@@ -29,6 +29,15 @@ Models whose tags end in `:cloud` or `-cloud` are clearly labeled **CLOUD**. Tho
 prompts to an Ollama remote service even though SaveToken itself connects only
 to the local Ollama daemon. Choose a model without `:cloud` for local inference.
 
+## On-device text to speech
+
+Every completed assistant reply has controls to speak it or export it as a WAV
+file. SaveToken uses voices installed in macOS through AVFoundation; text and
+generated audio stay on the Mac. In **Settings → On-device speech** you can
+choose a voice, adjust its speed, test it, or enable automatic reading of new
+replies. This feature does not send text to a TTS API and does not require
+microphone permission.
+
 ## Build from source
 
 Requirements: macOS 13+, Xcode command-line tools, and Swift 5.9 or later.
@@ -77,6 +86,8 @@ repository or its releases. See [freetoken/README.md](freetoken/README.md).
 - SaveToken stores UI preferences in
   `~/Library/Application Support/SaveToken/settings.json`.
 - Chat transcripts are not persisted by SaveToken.
+- Speech uses installed macOS voices locally; exported WAV files go only to the
+  location selected by the user.
 - Model output and requested shell commands are untrusted; review them before
   use.
 
