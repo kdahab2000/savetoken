@@ -26,22 +26,12 @@ from .capacity import (CapacityConfig, PREFILL_CURVES, active_cap, admit,
                        estimate_peak_memory_bytes)
 from .engine import Engine, GenerationCancelled
 from .manifest import ManifestError
+from .network import LOOPBACK_HOSTS, validate_host
 from .store import ModelStore, StoreError
 
-LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
 MAX_BODY_BYTES = 64 * 1024 * 1024
 DEFAULT_MAX_NEW_TOKENS = 512
 DEFAULT_MODEL_ID = "qwen3.5-healthcare-bf16"
-
-
-def validate_host(host: str) -> str:
-    if host not in LOOPBACK_HOSTS:
-        raise ValueError(
-            f"refusing to bind non-loopback host {host!r}; this server is "
-            "localhost-only by design"
-        )
-    return host
-
 
 class ModelSwitchError(Exception):
     def __init__(self, code: str, message: str, status: int = 400):

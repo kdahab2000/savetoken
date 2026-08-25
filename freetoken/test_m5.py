@@ -193,7 +193,7 @@ class TestRemoteModelCodePolicy(unittest.TestCase):
         self.assertEqual(offenders, [])
 
     def test_server_binds_loopback_only(self):
-        from freetoken.server import validate_host
+        from freetoken.network import validate_host
         with self.assertRaises(ValueError):
             validate_host("0.0.0.0")
         self.assertEqual(validate_host("127.0.0.1"), "127.0.0.1")
