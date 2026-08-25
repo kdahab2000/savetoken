@@ -1,0 +1,36 @@
+.DS_Store
+.build/
+FreeTokenApp/.build/
+FreeTokenApp/dist/
+*.app
+*.app.zip
+*.dmg
+*.pkg
+*.xcarchive
+*.dSYM
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Model artifacts are never source-controlled.
+m0_spike/
+m1_calibration/
+training_material/
+models/
+*.safetensors
+*.gguf
+*.partial
+
+# Credentials and local app state.
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+settings.json
+*.log
+*.tmp

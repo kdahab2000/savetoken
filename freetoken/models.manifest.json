@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "models": [
+    {
+      "id": "qwen3.5-healthcare-bf16",
+      "revision": "m0-conv-20260824",
+      "family": "qwen3.5-healthcare",
+      "format": "mlx",
+      "dtype": "bfloat16",
+      "path": "m0_spike/mlx_models/qwen3.5-healthcare-bf16",
+      "weights_file": "model.safetensors",
+      "size_bytes": 3763692313,
+      "sha256": "407352ef97faa06588d0154ddc532badab8e5c1e39e32e94062cb2509f231c01",
+      "license": "Apache-2.0 (upstream Qwen3.5-2B-Base)",
+      "research_only": true,
+      "notes": "Research and development only; not for clinical diagnosis or treatment. Converted in M0 from training_material/qwen3.5_healthcare/model; mlx-lm drops the vision tower and MTP head. Fidelity reference model.",
+      "context_limit": 262144,
+      "expected_resident_mb": 3764,
+      "prefill_curve": "bf16-m1",
+      "quant": null,
+      "url": null
+    },
+    {
+      "id": "qwen3.5-healthcare-4bit",
+      "revision": "m1-quant-20260824",
+      "family": "qwen3.5-healthcare",
+      "format": "mlx",
+      "dtype": "4bit",
+      "path": "m1_calibration/mlx_models/qwen3.5-healthcare-4bit",
+      "weights_file": "model.safetensors",
+      "size_bytes": 1176984909,
+      "sha256": "dc59dffe31e0b5f14aca91322ee238c6f5cd2b7ef4dbfea6e0d63cccbec43bb6",
+      "license": "Apache-2.0 (upstream Qwen3.5-2B-Base)",
+      "research_only": true,
+      "notes": "Research and development only; not for clinical diagnosis or treatment. 4-bit affine quantization (5.003 bits/weight) of the same checkpoint, produced in M1. KV cache stays bf16; prefill is ~2x slower than bf16 on this hybrid architecture.",
+      "context_limit": 262144,
+      "expected_resident_mb": 1177,
+      "prefill_curve": "q4-m1",
+      "quant": {
+        "bits": 4,
+        "group_size": 32,
+        "mode": "affine"
+      },
+      "url": null
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+name: Test and package
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: savetoken-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Run Swift tests
+        working-directory: FreeTokenApp
+        run: swift test --scratch-path "$RUNNER_TEMP/SaveToken-build"
+
+      - name: Build deterministic app bundle
+        working-directory: FreeTokenApp
+        env:
+          SCRATCH_PATH: ${{ runner.temp }}/SaveToken-build
+        run: sh package_app.sh
+
+      - name: Ad-hoc sign and verify development artifact
+        working-directory: FreeTokenApp
+        run: sh tools/sign_app.sh ad-hoc
+
+      - name: Run portable Python and packaging tests
+        run: python3 -m unittest freetoken.test_m5 -v
+
+      - name: Verify release checksum
+        working-directory: FreeTokenApp/dist
+        run: shasum -a 256 -c SaveToken.sha256
+
+      - name: Upload development artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: SaveToken-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            FreeTokenApp/dist/SaveToken.app.zip
+            FreeTokenApp/dist/SaveToken.sha256
+            FreeTokenApp/dist/RELEASE_MANIFEST.json
