@@ -19,8 +19,8 @@ import subprocess
 
 APP_NAME = "SaveToken.app"
 EXECUTABLE_NAME = "SaveToken"
-APP_VERSION = "0.6.0"
-BUNDLE_VERSION = "2"
+APP_VERSION = "0.6.1"
+BUNDLE_VERSION = "3"
 BUNDLE_ID = "local.savetoken.app"
 BUNDLE_NAME = "SaveToken"
 MIN_MACOS = "13.0"

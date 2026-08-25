@@ -2,6 +2,11 @@
 
 This project follows semantic versioning. Dates use ISO 8601.
 
+## 0.6.1 — 2026-08-26
+
+- Added an explicit response-language policy so Ollama replies stay in the
+  language of the user's latest message unless translation is requested.
+
 ## 0.6.0 — 2026-08-26
 
 - Added fully local text-to-speech playback using voices installed in macOS.

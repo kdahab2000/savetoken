@@ -5,6 +5,13 @@ import XCTest
 /// server (captured from /v1/models, /health, admission rejections, and the
 /// switch endpoint in M3).
 final class ParsingTests: XCTestCase {
+
+    func testResponsePolicyPreservesUserLanguage() {
+        XCTAssertTrue(ResponseLanguagePolicy.base.contains("same language"))
+        XCTAssertTrue(ResponseLanguagePolicy.base.contains("If the user writes Arabic, answer in Arabic"))
+        XCTAssertTrue(ResponseLanguagePolicy.base.contains("Do not translate unless"))
+        XCTAssertTrue(ResponseLanguagePolicy.forUserText("اكتب الإجابة بالعربية").contains("complete answer in Arabic"))
+    }
     let modelsJSON = """
     {"object":"list","data":[
       {"id":"qwen3.5-healthcare-bf16","object":"model","created":0,"owned_by":"local",

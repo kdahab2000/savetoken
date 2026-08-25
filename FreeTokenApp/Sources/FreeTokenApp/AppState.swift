@@ -32,6 +32,22 @@ enum ConnectionStatus: Equatable {
     case offline(reason: String)
 }
 
+enum ResponseLanguagePolicy {
+    static let base = "Respond with only the final answer. Do not reveal reasoning, planning, or internal thoughts. Do not output think tags or tokenizer control tokens. Respond in the same language as the user's latest message. If the user writes Arabic, answer in Arabic. Do not translate unless the user explicitly asks for translation. Preserve code, commands, model names, and technical identifiers exactly."
+
+    static func forUserText(_ text: String) -> String {
+        let hasArabic = text.unicodeScalars.contains { scalar in
+            (0x0600...0x06FF).contains(scalar.value) ||
+            (0x0750...0x077F).contains(scalar.value) ||
+            (0x08A0...0x08FF).contains(scalar.value)
+        }
+        if hasArabic {
+            return base + " The latest user message contains Arabic. Write the complete answer in Arabic, not English, unless the user explicitly requests a translation."
+        }
+        return base
+    }
+}
+
 @MainActor
 final class AppState: ObservableObject {
     @Published var provider: BackendProvider
@@ -443,14 +459,14 @@ final class AppState: ObservableObject {
         isGenerating = true
 
         if provider == .ollama && sshToolsEnabled && shouldUseSSHTools(for: text) {
-            sendWithSSHTools()
+            sendWithSSHTools(for: text)
             return
         }
 
         let payload = [
             ChatMessagePayload(
                 role: "system",
-                content: "Respond with only the final answer. Do not reveal reasoning, planning, or internal thoughts. Do not output think tags or tokenizer control tokens."
+                content: ResponseLanguagePolicy.forUserText(text)
             )
         ] + messages.map { ChatMessagePayload(role: $0.role, content: $0.content) }
         let body = ChatRequestBody(messages: payload, max_tokens: maxTokens,
@@ -535,7 +551,7 @@ final class AppState: ObservableObject {
         return indicators.contains(where: { normalized.contains($0) })
     }
 
-    private func sendWithSSHTools() {
+    private func sendWithSSHTools(for userText: String) {
         guard let model = activeModel?.id else {
             banner = Banner(kind: .error, text: "Select an Ollama model before using SSH tools.")
             isGenerating = false
@@ -547,7 +563,7 @@ final class AppState: ObservableObject {
         }
         let system = OllamaMessage(
             role: "system",
-            content: "Respond with only the final answer. Do not reveal reasoning or internal thoughts. "
+            content: ResponseLanguagePolicy.forUserText(userText) + " "
                 + "You may call run_ssh only when the user explicitly asks you to inspect or change a server. "
                 + "Use only the configured SSH aliases shown by the app. The app will ask the user for approval "
                 + "before every command, and you must never ask for passwords or private keys.")
