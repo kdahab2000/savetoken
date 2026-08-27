@@ -6,6 +6,9 @@ This project follows semantic versioning. Dates use ISO 8601.
 
 - Added an explicit response-language policy so Ollama replies stay in the
   language of the user's latest message unless translation is requested.
+- Added chat attachments with drag-and-drop and multi-file selection.
+- Added local text/PDF extraction and Ollama image inputs for vision models.
+- Added clear rejection of unsupported binary files and images for SaveToken MLX.
 
 ## 0.6.0 — 2026-08-26
 

@@ -9,7 +9,7 @@ or prompt logging.
 
 ## Release status
 
-Version 0.5.0 is a development preview for macOS 13 or later. The downloadable
+Version 0.6.1 is a development preview for macOS 13 or later. The downloadable
 app is ad-hoc signed because this project does not yet have an Apple Developer
 ID certificate or notarization ticket. macOS may show an unidentified-developer
 warning. The source, automated tests, release manifest, and SHA-256 checksum
@@ -37,6 +37,15 @@ generated audio stay on the Mac. In **Settings → On-device speech** you can
 choose a voice, adjust its speed, test it, or enable automatic reading of new
 replies. This feature does not send text to a TTS API and does not require
 microphone permission.
+
+## Chat attachments
+
+Use **Attach** to select one or more files, or drag them into the message box.
+SaveToken reads text files and PDFs locally and includes their text in the
+prompt. Images are sent as local Base64 image inputs to Ollama and require a
+vision-capable model. The SaveToken MLX backend currently accepts text and
+text-file/PDF contents, but not image inputs. Unsupported binary files are
+rejected instead of uploaded or stored.
 
 ## Build from source
 
@@ -88,6 +97,9 @@ repository or its releases. See [freetoken/README.md](freetoken/README.md).
 - Chat transcripts are not persisted by SaveToken.
 - Speech uses installed macOS voices locally; exported WAV files go only to the
   location selected by the user.
+- Attachments are read locally; image data is sent only to the selected local
+  Ollama endpoint when an image-capable model is selected. Attachments are not
+  persisted by SaveToken after the request.
 - Model output and requested shell commands are untrusted; review them before
   use.
 
