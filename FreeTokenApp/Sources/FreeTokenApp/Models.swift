@@ -122,6 +122,13 @@ struct OllamaModelDetails: Decodable {
 struct ChatMessagePayload: Codable, Equatable {
     let role: String
     let content: String
+    let images: [String]?
+
+    init(role: String, content: String, images: [String]? = nil) {
+        self.role = role
+        self.content = content
+        self.images = images
+    }
 }
 
 struct ChatRequestBody: Encodable {
@@ -183,13 +190,15 @@ struct OllamaMessage: Codable, Equatable {
     let content: String?
     let tool_calls: [OllamaToolCall]?
     let tool_name: String?
+    let images: [String]?
 
     init(role: String, content: String?, tool_calls: [OllamaToolCall]? = nil,
-         tool_name: String? = nil) {
+         tool_name: String? = nil, images: [String]? = nil) {
         self.role = role
         self.content = content
         self.tool_calls = tool_calls
         self.tool_name = tool_name
+        self.images = images
     }
 }
 

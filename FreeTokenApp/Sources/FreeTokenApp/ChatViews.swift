@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ChatView: View {
     @EnvironmentObject var state: AppState
@@ -65,6 +66,11 @@ struct MessageBubble: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(message.content)
                     .textSelection(.enabled)
+                if !message.attachmentNames.isEmpty {
+                    Label(message.attachmentNames.joined(separator: ", "), systemImage: "paperclip")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 HStack(spacing: 6) {
                     if message.stopped {
                         Label("stopped", systemImage: "stop.circle")
@@ -238,9 +244,30 @@ struct BudgetIndicator: View {
 struct ComposerBar: View {
     @EnvironmentObject var state: AppState
     @FocusState private var composerFocused: Bool
+    @State private var showingFileImporter = false
+    @State private var isDropTargeted = false
 
     var body: some View {
         VStack(spacing: 6) {
+            if !state.attachments.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(state.attachments) { attachment in
+                            HStack(spacing: 4) {
+                                Image(systemName: attachment.isImage ? "photo" : "doc.text")
+                                Text(attachment.name).lineLimit(1)
+                                Button { state.removeAttachment(attachment) } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                            .font(.caption)
+                            .padding(.horizontal, 8).padding(.vertical, 5)
+                            .background(Capsule().fill(Color.gray.opacity(0.14)))
+                        }
+                    }
+                }
+            }
             HStack(alignment: .bottom, spacing: 8) {
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $state.composer)
@@ -256,8 +283,27 @@ struct ComposerBar: View {
                     }
                 }
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.06)))
+                .onDrop(of: [UTType.fileURL.identifier], isTargeted: $isDropTargeted) { providers in
+                    for provider in providers {
+                        _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                            guard let url else { return }
+                            DispatchQueue.main.async { state.addAttachments([url]) }
+                        }
+                    }
+                    return !providers.isEmpty
+                }
+                .overlay {
+                    if isDropTargeted {
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6]))
+                    }
+                }
 
                 VStack(spacing: 6) {
+                    Button { showingFileImporter = true } label: {
+                        Label("Attach", systemImage: "paperclip")
+                    }
+                    .help("Attach an image, PDF, or text file")
                     if state.isGenerating {
                         Button {
                             state.stop()
@@ -272,7 +318,7 @@ struct ComposerBar: View {
                             Label("Send", systemImage: "paperplane.fill")
                         }
                         .keyboardShortcut(.return, modifiers: .command)
-                        .disabled(state.composer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        .disabled(state.composer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && state.attachments.isEmpty
                                   || !state.isOnline)
                     }
                     Button {
@@ -296,5 +342,10 @@ struct ComposerBar: View {
             }
         }
         .padding(12)
+        .fileImporter(isPresented: $showingFileImporter,
+                      allowedContentTypes: [.item],
+                      allowsMultipleSelection: true) { result in
+            if case .success(let urls) = result { state.addAttachments(urls) }
+        }
     }
 }

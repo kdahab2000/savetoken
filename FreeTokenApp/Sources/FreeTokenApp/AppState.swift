@@ -9,6 +9,8 @@ struct ChatMessage: Identifiable, Equatable {
     var content: String
     var stopped: Bool = false
     var warning: String? = nil
+    var attachmentNames: [String] = []
+    var imageBase64: [String] = []
 }
 
 struct Banner: Equatable {
@@ -56,6 +58,7 @@ final class AppState: ObservableObject {
     @Published var health: HealthResponse? = nil
     @Published var messages: [ChatMessage] = []
     @Published var composer: String = ""
+    @Published var attachments: [ChatAttachment] = []
     @Published var maxTokens: Int = 512
     @Published var isGenerating = false
     @Published var isSwitching = false
@@ -447,11 +450,42 @@ final class AppState: ObservableObject {
 
     // MARK: generation
 
+    func addAttachments(_ urls: [URL]) {
+        for url in urls {
+            do {
+                let attachment = try AttachmentService.load(url: url)
+                attachments.append(attachment)
+            } catch {
+                banner = Banner(kind: .error, text: "(url.lastPathComponent): (error.localizedDescription)")
+            }
+        }
+    }
+
+    func removeAttachment(_ attachment: ChatAttachment) {
+        attachments.removeAll { $0.id == attachment.id }
+    }
+
+    private var attachmentText: String {
+        attachments.compactMap { attachment in
+            guard let content = attachment.content else { return nil }
+            return "\n\n--- Attached file: \(attachment.name) ---\n\(content)\n--- End attached file ---"
+        }.joined()
+    }
+
     func send() {
         let text = composer.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !isGenerating, isOnline, !text.isEmpty else { return }
-        messages.append(ChatMessage(role: "user", content: text))
+        guard !isGenerating, isOnline, (!text.isEmpty || !attachments.isEmpty) else { return }
+        let pendingAttachments = attachments
+        if provider == .saveToken && pendingAttachments.contains(where: { $0.isImage }) {
+            banner = Banner(kind: .error, text: "SaveToken MLX accepts text and files, but not images. Select Ollama with a vision model for photos.")
+            return
+        }
+        let messageText = text + attachmentText
+        messages.append(ChatMessage(role: "user", content: messageText,
+                                     attachmentNames: pendingAttachments.map(\.name),
+                                     imageBase64: pendingAttachments.compactMap(\.imageBase64)))
         composer = ""
+        attachments.removeAll()
         banner = nil
         lastAdmission = nil
         streamWarning = nil
@@ -466,9 +500,12 @@ final class AppState: ObservableObject {
         let payload = [
             ChatMessagePayload(
                 role: "system",
-                content: ResponseLanguagePolicy.forUserText(text)
+                content: ResponseLanguagePolicy.forUserText(messageText)
             )
-        ] + messages.map { ChatMessagePayload(role: $0.role, content: $0.content) }
+        ] + messages.map {
+            ChatMessagePayload(role: $0.role, content: $0.content,
+                               images: $0.imageBase64.isEmpty ? nil : $0.imageBase64)
+        }
         let body = ChatRequestBody(messages: payload, max_tokens: maxTokens,
                                    stream: true, allow_maximum_context: nil,
                                    model: provider == .ollama ? activeModel?.id : nil)
@@ -559,7 +596,8 @@ final class AppState: ObservableObject {
         }
 
         let visibleHistory = messages.map {
-            OllamaMessage(role: $0.role, content: $0.content)
+            OllamaMessage(role: $0.role, content: $0.content,
+                          images: $0.imageBase64.isEmpty ? nil : $0.imageBase64)
         }
         let system = OllamaMessage(
             role: "system",
@@ -689,6 +727,7 @@ final class AppState: ObservableObject {
         guard !isGenerating else { return }
         speech.stop()
         messages.removeAll()
+        attachments.removeAll()
         banner = nil
         lastAdmission = nil
     }
