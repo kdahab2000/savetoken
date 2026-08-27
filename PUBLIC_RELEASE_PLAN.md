@@ -1,6 +1,6 @@
 # SaveToken public-release checklist
 
-## Completed for the 0.5.0 development preview
+## Completed for the 0.6.1 development preview
 
 - Portable per-user settings under Application Support.
 - Loopback-only defaults for Ollama and SaveToken MLX.
@@ -13,6 +13,9 @@
 - Consistent SaveToken name, icon, bundle identifier, README, license, security
   policy, contribution guide, changelog, tests, packaging tools, and CI.
 - Ad-hoc signed development artifact with manifest and SHA-256 checksum.
+- Local text/PDF attachments and Ollama image attachments for vision models.
+- On-device speech playback and WAV export using installed macOS voices.
+- Same-language response policy with hidden reasoning/control-token cleanup.
 
 ## Required before general availability
 
