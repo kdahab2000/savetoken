@@ -25,6 +25,8 @@ struct AppSettings: Codable, Equatable {
     var speechRate: Double = 0.5
     /// Speak each completed assistant response without an extra click.
     var autoSpeakReplies: Bool = false
+    /// When enabled, each prompt is augmented with DuckDuckGo Instant Answer results.
+    var webSearchEnabled: Bool = false
 
     private enum CodingKeys: String, CodingKey {
         case provider
@@ -36,6 +38,7 @@ struct AppSettings: Codable, Equatable {
         case speechVoiceIdentifier
         case speechRate
         case autoSpeakReplies
+        case webSearchEnabled
     }
 
     init() {}
@@ -54,6 +57,7 @@ struct AppSettings: Codable, Equatable {
         let decodedSpeechRate = try values.decodeIfPresent(Double.self, forKey: .speechRate) ?? 0.5
         speechRate = min(max(decodedSpeechRate, 0.1), 1.0)
         autoSpeakReplies = try values.decodeIfPresent(Bool.self, forKey: .autoSpeakReplies) ?? false
+        webSearchEnabled = try values.decodeIfPresent(Bool.self, forKey: .webSearchEnabled) ?? false
     }
 
     var hasWorkspace: Bool {

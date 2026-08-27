@@ -2,6 +2,10 @@
 
 This project follows semantic versioning. Dates use ISO 8601.
 
+## 0.6.2 — 2026-08-28
+
+- Added optional DuckDuckGo web search, disabled by default and controlled from Settings.
+
 ## 0.6.1 — 2026-08-26
 
 - Added an explicit response-language policy so Ollama replies stay in the
@@ -9,6 +13,7 @@ This project follows semantic versioning. Dates use ISO 8601.
 - Added chat attachments with drag-and-drop and multi-file selection.
 - Added local text/PDF extraction and Ollama image inputs for vision models.
 - Added clear rejection of unsupported binary files and images for SaveToken MLX.
+- Added optional DuckDuckGo web search, disabled by default and controlled from Settings.
 
 ## 0.6.0 — 2026-08-26
 

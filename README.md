@@ -9,7 +9,7 @@ or prompt logging.
 
 ## Release status
 
-Version 0.6.1 is a development preview for macOS 13 or later. The downloadable
+Version 0.6.2 is a development preview for macOS 13 or later. The downloadable
 app is ad-hoc signed because this project does not yet have an Apple Developer
 ID certificate or notarization ticket. macOS may show an unidentified-developer
 warning. The source, automated tests, release manifest, and SHA-256 checksum
@@ -46,6 +46,14 @@ prompt. Images are sent as local Base64 image inputs to Ollama and require a
 vision-capable model. The SaveToken MLX backend currently accepts text and
 text-file/PDF contents, but not image inputs. Unsupported binary files are
 rejected instead of uploaded or stored.
+
+## Optional web search
+
+Expand **Settings** and enable **Search the web before answering** when current
+information is needed. SaveToken queries DuckDuckGo Instant Answers and adds
+the returned text and source URLs to the local model context. It is disabled by
+default; enabling it means the prompt is sent to DuckDuckGo, while the model
+request still goes to the selected Ollama or SaveToken endpoint.
 
 ## Build from source
 

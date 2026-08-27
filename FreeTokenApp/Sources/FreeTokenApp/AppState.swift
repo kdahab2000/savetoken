@@ -232,6 +232,11 @@ final class AppState: ObservableObject {
         settingsStore.save(settings)
     }
 
+    func setWebSearchEnabled(_ enabled: Bool) {
+        settings.webSearchEnabled = enabled
+        settingsStore.save(settings)
+    }
+
     func speak(_ message: ChatMessage) {
         if speech.activeMessageID == message.id && speech.isSpeaking {
             speech.stop()
@@ -465,8 +470,8 @@ final class AppState: ObservableObject {
         attachments.removeAll { $0.id == attachment.id }
     }
 
-    private var attachmentText: String {
-        attachments.compactMap { attachment in
+    private func attachmentText(for items: [ChatAttachment]) -> String {
+        items.compactMap { attachment in
             guard let content = attachment.content else { return nil }
             return "\n\n--- Attached file: \(attachment.name) ---\n\(content)\n--- End attached file ---"
         }.joined()
@@ -480,7 +485,21 @@ final class AppState: ObservableObject {
             banner = Banner(kind: .error, text: "SaveToken MLX accepts text and files, but not images. Select Ollama with a vision model for photos.")
             return
         }
-        let messageText = text + attachmentText
+        if settings.webSearchEnabled {
+            isGenerating = true
+            banner = Banner(kind: .info, text: "Searching the web…")
+            Task { [weak self] in
+                let context = try? await WebSearchService.search(text)
+                self?.beginSend(text: text, pendingAttachments: pendingAttachments,
+                                webContext: context)
+            }
+            return
+        }
+        beginSend(text: text, pendingAttachments: pendingAttachments, webContext: nil)
+    }
+
+    private func beginSend(text: String, pendingAttachments: [ChatAttachment], webContext: String?) {
+        let messageText = text + attachmentText(for: pendingAttachments)
         messages.append(ChatMessage(role: "user", content: messageText,
                                      attachmentNames: pendingAttachments.map(\.name),
                                      imageBase64: pendingAttachments.compactMap(\.imageBase64)))
@@ -501,6 +520,7 @@ final class AppState: ObservableObject {
             ChatMessagePayload(
                 role: "system",
                 content: ResponseLanguagePolicy.forUserText(messageText)
+                    + (webContext.map { "\n\nUse these current web results as reference:\n\($0)" } ?? "")
             )
         ] + messages.map {
             ChatMessagePayload(role: $0.role, content: $0.content,

@@ -342,6 +342,11 @@ struct SettingsView: View {
                         .foregroundColor(state.settings.hasWorkspace ? .green : .secondary)
                 }
                 SpeechSettingsView(speech: state.speech)
+                Toggle("Search the web before answering", isOn: Binding(
+                    get: { state.settings.webSearchEnabled },
+                    set: { state.setWebSearchEnabled($0) }))
+                Text("Optional DuckDuckGo search. Queries leave this Mac only when enabled.")
+                    .font(.caption2).foregroundColor(.secondary)
                 setupStatusRow("Ollama on 127.0.0.1:11434", detected: state.ollamaDetected)
                 setupStatusRow("\(state.provider.displayName) backend",
                                detected: state.isOnline ? true : false)
